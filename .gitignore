@@ -1,0 +1,25 @@
+# Секреты и ключи
+*.key
+*.pub
+id_rsa
+id_ed25519
+*.pem
+.ssh/
+
+# Terraform state
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Ansible tmp
+*.retry
+
+# Локальные конфиги, которые меняются у каждого
+inventory.ini
+.ssh/config
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,9 @@
+Как запускать всё это по порядку
+
+Просто выполняй команды по очереди:
+
+    ansible-playbook -i inventory.ini 01_nginx.yml
+    ansible webservers -i inventory.ini -m apt -a "upgrade=dist update_cache=yes" --become
+    ansible-playbook -i inventory.ini 03_index.yml
+    ansible-playbook -i inventory.ini 04_report.yml
+    ansible-playbook -i inventory.ini 05_monitoring.yml

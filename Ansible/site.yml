@@ -1,0 +1,83 @@
+---
+- name: Full stack setup:nginx + page + monitoring
+  hosts: webservers
+  become: true
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Ensure Nginx is running and enabled
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Upgrade all packages (dist)
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Deploy custom index.html
+      ansible.builtin.copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head><title>Тестовая страница</title></head>
+          <body>
+            <h1>Привет, Олег!</h1>
+            <p>Эта страница развёрнута через Ansible на хосте {{ ansible_hostname }}</p>
+            <p>Внутренний IP: {{ ansible_default_ipv4.address }}</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Disk usage
+      ansible.builtin.command: df -h /
+      register: disk_out
+      changed_when: false
+
+    - name: Top processes by memory
+      ansible.builtin.shell: ps aux --sort=-%mem | head -11
+      register: proc_out
+      changed_when: false
+
+    - name: Show report
+      ansible.builtin.debug:
+        msg: |
+          === {{ inventory_hostname }}: место на диске ===
+          {{ disk_out.stdout }}
+          === {{ inventory_hostname }}: процессы (топ по памяти) ===
+          {{ proc_out.stdout }}
+
+    - name: Copy monitoring script
+      ansible.builtin.copy:
+        src: system_monitor.sh
+        dest: /usr/local/bin/system_monitor.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create log file
+      ansible.builtin.file:
+        path: /var/log/system_monitor.log
+        state: touch
+        owner: syslog
+        group: adm
+        mode: '0644'
+
+    - name: Add cron job every minute
+      ansible.builtin.cron:
+        name: system monitor
+        user: root
+        job: /usr/local/bin/system_monitor.sh
+        state: present
